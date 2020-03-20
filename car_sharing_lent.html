@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head Section -->
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>Guide</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css">
+
+    <style>
+        @font-face {
+            font-family: "ajihude";
+            src: "/static/css/ajihude/ajihude.ttf"
+        }
+        body {
+            text-align: center;
+            background-color: #f5f5f5;
+        }
+        h1, h2, h3, h4 {
+            font-family: "ajihude";
+        }
+        #map {
+  				position: absolute;
+  				top: 0;
+  				left: 0;
+  				width: 100% !important;
+  				height: 100% !important;
+  			}
+        #exampleModal .modal-content {
+          width: 100% !important;
+          height: 90vh !important;
+        }
+
+    </style>
+
+</head>
+
+    <!-- Body Section -->
+    <body style='padding-top:4.5rem;'>
+
+        <div>
+            <div id="header">
+                <h1>Car Sharing Application</h1>
+            </div>
+
+            <div id="main">
+                <div>
+                  <form>
+                    <div class="form-group">
+                      <label for="Input">お名前</label>
+                      <input type="text" class="form-control" id="input-name" placeholder="山田　太郎">
+                    </div>
+                    <div class="form-group">
+                      <label for="Input2">車の種類</label>
+                      <input type="text" class="form-control" id="input-carType" placeholder="セルシオ">
+                    </div>
+                    <div class="form-group">
+                      <label for="Input">金額</label>
+                      <input type="text" class="form-control" id="input-price" placeholder="5,000円">
+                    </div>
+                    <div class="form-group">
+                      <label for="Input2">車の場所</label>
+                      <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
+                        Map表示
+                      </button>
+                      <input type="text" class="form-control" id="input-place" placeholder="緯度・軽度を入力">
+                    </div>
+                  </form>
+                </div>
+                <div>
+                  <button type="button" class="btn btn-outline-secondary btn-lg" id="btn-resister">登録</button>
+                </div>
+
+                <!-- modal部分の記述 -->
+                  <!-- モーダルの設定 -->
+                  <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+                    <div class="modal-dialog" role="document">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="exampleModalLabel">車の受け渡し場所をタップしてください</h5>
+                          <button type="button" class="close" data-dismiss="modal" aria-label="閉じる">
+                            <span aria-hidden="true">&times;</span>
+                          </button>
+                        </div>
+                        <div class="modal-body">
+                          <div id="map" style="width:100%;height:300px;"></div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-dismiss="modal">閉じる</button>
+                        </div><!-- /.modal-footer -->
+                      </div><!-- /.modal-content -->
+                    </div><!-- /.modal-dialog -->
+                  </div><!-- /.modal -->
+
+            </div>
+        </div>
+
+        <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+        <script src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnqzHDQ8qmWXdJI7TmIA3BjW9KIcQThmk"></script>
+    		<script src="https://www.gstatic.com/charts/loader.js"></script>
+
+        <script>
+
+          // mapモーダルの中でタップした場所の緯度・経度を格納する変数
+          let lat;
+          let lng;
+          let latLng;
+
+          // ここにjQuery書く
+          $(function(){
+
+            $('#exampleModal').on('show.bs.modal', function(event){
+                console.log('show modal');
+                initMap();
+            })
+
+            $('#btn-resister').on('click', function(){
+                let data = {};
+                let name = $('#input-name').val();
+                let carType = $('#input-carType').val();
+                let price = $('#input-price').val();
+                let place = latLng;
+                console.log(latLng);
+
+                data.name = name;
+                data.type = carType;
+                data.price = price;
+                data.place = place;
+                console.log(data);
+
+                $.ajax({
+        					"type": "POST",
+        					"url": "../common/post_cloudant",
+        					"data": {
+        						"table": "sharing",
+        						"data" : data
+        					},
+        				}).then(function(response){
+                      console.log('response: ', response);
+                  }, function(error){
+                    console.log('error: ', error);
+                    alert('登録できませんでした');
+                    });
+            });
+          });
+
+          // 現在地取得処理
+    			function initMap() {
+    				// Geolocation APIに対応している
+    				if (navigator.geolocation) {
+    				 // 現在地を取得
+    				 navigator.geolocation.getCurrentPosition(
+    					 // 取得成功した場合
+    					 function(position) {
+    						 console.log(position);
+    						 // 緯度・経度を変数に格納
+    						 var mapLatLng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+    						 // マップオプションを変数に格納
+    						 var mapOptions = {
+    							 zoom : 14,          // 拡大倍率
+    							 center : mapLatLng  // 緯度・経度
+    						 };
+    						 // マップオブジェクト作成
+    						 var map = new google.maps.Map(
+    							 document.getElementById("map"), // マップを表示する要素
+    							 mapOptions         // マップオプション
+    						 );
+
+    						 // This event listener when the map is clicked.
+                 google.maps.event.addListener(map, 'click', function(event) {
+                     lat = event.latLng.lat();
+                     lng = event.latLng.lng();
+                     console.log('lat: ', lat);
+    								 console.log('lng: ', lng);
+                     latLng = {
+                       lat: lat,
+                       lng: lng
+                     }
+                     let inputPlace =document.getElementById('input-place');
+                     inputPlace.value = '緯度: ' + lat + ', 経度: ' + lng;
+                 });
+    					 },
+    					 // 取得失敗した場合
+    					 function(error) {
+    						 // エラーメッセージを表示
+    						 switch(error.code) {
+    							 case 1: // PERMISSION_DENIED
+    								 alert("位置情報の利用が許可されていません");
+    								 break;
+    							 case 2: // POSITION_UNAVAILABLE
+    								 alert("現在位置が取得できませんでした");
+    								 break;
+    							 case 3: // TIMEOUT
+    								 alert("タイムアウトになりました");
+    								 break;
+    							 default:
+    								 alert("その他のエラー(エラーコード:"+error.code+")");
+    								 break;
+    						 }
+    					 }
+    				 );
+    				// Geolocation APIに対応していない
+    				} else {
+    				 alert("この端末では位置情報が取得できません");
+    				}
+    			}
+
+        </script>
+
+    </body>
+</html>

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ja">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<title>Car Sharing Appllication</title>
+
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+
+		<style type="text/css">
+			body {
+				overflow-y: scroll;
+			}
+			.no-gutters {
+				margin:0;
+				padding:0;
+			}
+			.no-gutters　> .col,
+			.no-gutters　> [class*="col-"] {
+				margin:0;
+				padding:0;
+			}
+			#map {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100% !important;
+				height: 100% !important;
+			}
+
+		</style>
+	</head>
+
+	<body style="padding-top:4.5rem;">
+	    <div>
+            <div id="map" style="width:100%;height:300px;"></div>
+      </div>
+
+		<!-- <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDjLyzdd1jNcV0bNd1dzQIEV7Vl91wp1kE&language=ja&libraries=drawing,geometry"></script>
+    AIzaSyBnqzHDQ8qmWXdJI7TmIA3BjW9KIcQThmk -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnqzHDQ8qmWXdJI7TmIA3BjW9KIcQThmk"></script>
+		<script src="https://www.gstatic.com/charts/loader.js"></script>
+
+		<script>
+
+			// 現在地取得処理
+			function initMap() {
+				// Geolocation APIに対応している
+				if (navigator.geolocation) {
+				 // 現在地を取得
+				 navigator.geolocation.getCurrentPosition(
+					 // 取得成功した場合
+					 function(position) {
+						 console.log(position);
+						 // 緯度・経度を変数に格納
+						 var mapLatLng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+						 // マップオプションを変数に格納
+						 var mapOptions = {
+							 zoom : 15,          // 拡大倍率
+							 center : mapLatLng  // 緯度・経度
+						 };
+						 // マップオブジェクト作成
+						 var map = new google.maps.Map(
+							 document.getElementById("map"), // マップを表示する要素
+							 mapOptions         // マップオプション
+						 );
+
+						 // This event listener when the map is clicked.
+             google.maps.event.addListener(map, 'click', function(event) {
+							   console.log(event.latLng.lat());
+								 console.log(event.latLng.lng())
+             });
+					 },
+					 // 取得失敗した場合
+					 function(error) {
+						 // エラーメッセージを表示
+						 switch(error.code) {
+							 case 1: // PERMISSION_DENIED
+								 alert("位置情報の利用が許可されていません");
+								 break;
+							 case 2: // POSITION_UNAVAILABLE
+								 alert("現在位置が取得できませんでした");
+								 break;
+							 case 3: // TIMEOUT
+								 alert("タイムアウトになりました");
+								 break;
+							 default:
+								 alert("その他のエラー(エラーコード:"+error.code+")");
+								 break;
+						 }
+					 }
+				 );
+				// Geolocation APIに対応していない
+				} else {
+				 alert("この端末では位置情報が取得できません");
+				}
+			}
+
+			// Adds a marker to the map.
+      function addMarker(location, map) {
+        var marker = new google.maps.Marker({
+          position: location,
+          map: map
+        });
+				console.log(marker.getPosition())
+      }
+
+			google.maps.event.addDomListener(window, 'load', initMap);
+
+
+
+
+
+//         var map = null;
+//
+// 				// マップ編集モード
+// 				var map_edit_Mode = false;
+// 				var map_drawingManager = null;
+//
+// 	 			// カスタムコントロールアイコンの活性化状態
+// 	 			var map_area_enable = true;
+// 				var target_area = null;
+// 				var divCtlLblFilter = null;
+//
+//         let polygon_text = [];
+//         let id;
+//
+//         var system = {};
+//         let areas = [];
+//         let beacons;
+//         let locations;
+//         let markers = [];
+//
+//
+// 			//****************************************************************************************************
+// 			// データ取得処理　※共通処理
+// 			//****************************************************************************************************
+// 			function getData(table, key) {
+// 				if (key == "") {
+// 					key = {
+// 						"selector": {
+// 							"_id": {"$ne": ""}
+// 						}
+// 					};
+// 				};
+// 				var defer = $.Deferred();
+// 				$.ajax({
+// 					type: "POST",
+// 					url: "../common/find_cloudant",
+// 					data: {
+// 						"table": table,
+// 						"body": key
+// 					},
+// 					dataType: 'json',
+// 					success: function(result) {
+// 					    console.log('getData() ajax response:',result);
+// 						defer.resolve(result.data);
+// 					},
+// 					error: function(result) {
+// 					    //console.log(result);
+// 						defer.reject(result);
+// 					}
+// 				})
+// 				return defer.promise();
+// 			};
+//
+//
+//
+// 			//****************************************************************************************************
+// 			// 初期表示画面のボタンに関する処理
+// 			//***************************************************************************************************
+//
+//
+//
+//
+//             //****************************************************************************************************
+// 			// Google Map api のオブジェクト生成に関する処理
+// 			//****************************************************************************************************
+//
+//
+// 			function initMap() {
+//           console.log('initMap system: ', system);
+// 				// MAP設定
+// 				var mapDiv = document.getElementById("map-canvas");
+// 				var mapOptions = {
+// 					disableDefaultUI: true, //デフォルトUIを全て無効化
+//  					mapTypeControl: true, //マップタイプ コントロール
+// // 						fullscreenControl: false, //全画面表示コントロール
+//  					streetViewControl: false, //ストリートビュー コントロール
+// 					zoomControl: true, //ズーム コントロール
+// // 						rotateControl: false, // 回転コントロール
+// 					center: {lat: Number(system.map_latitude), lng: Number(system.map_longitude)},
+// 					zoom: Number(system.map_zoom),
+// 					mapTypeId: system.map_mapTypeId,
+// 					disableDoubleClickZoom: true,
+// 					styles: [{
+// 						stylers: [
+// 							{hue: "#00FF00"},
+// 							//{hue: "#ff0000"},
+// 							{saturation: -50},
+// 							{weight: 2}
+// 						]
+// 					}]
+// 				};
+//
+// 				// MAP生成
+// 				map = new google.maps.Map(mapDiv, mapOptions);
+//             drawPolygon();
+// 			  }
+//
+//
+//
+//             /**
+//              * ポリゴンオブジェクトをmapオブジェクトに登録する処理
+//              */
+// 			function drawPolygon() {
+// 				console.log('drawPolygon() areas: ',areas);
+// 				map_area = [];
+// 				areas.forEach(function (area, index) {
+// 					// Areaの各頂点の座標データを取得
+// 					var points = [];
+// 					area.Location.forEach(function (loc) {
+// 						var latlng = new google.maps.LatLng(loc.latitude, loc.longitude);
+// 						points.push(latlng);
+// 					});
+//
+// 					// オプション設定
+// 					var polyOptions = {
+// 						strokeColor: '#00ff00',
+// 						strokeOpacity: 0.5,
+// 						strokeWeight: 2,
+// 						fillColor: '#ff0000',
+// 						fillOpacity: 0.3,
+// 						path: points,
+// 						visible: true
+// 					};
+//
+// 					// MAPに描画
+// 					map_area[index] = new google.maps.Polygon(polyOptions);
+// 					map_area[index].setMap(map);
+// 				});
+// 			}
+//
+//
+//
+//
+// 			//markerをareaListsの順番で表示する処理
+// 			function movedRecord(){
+// 			    clearMarkers();
+// 			    console.log('movedRecord areaLists: ', areaLists);
+//
+// 			    doSomethingLoop(areaLists.length, 0)
+// 			}
+//
+//             //iconを定義 http://www.kawa.ne.jp/~kawa/gif/animal/others/moose.gif
+//             let img = {
+//                 //url: '../img/Logo/FamisukeLOGO.jpg',
+//                 //url: 'http://www.kawa.ne.jp/~kawa/gif/animal/others/moose.gif',
+//                 //url: 'http://www.kawa.ne.jp/~kawa/gif/animal/others/cowact2.gif',
+//                 url: 'http://www.kawa.ne.jp/~kawa/gif/animal/dog/21greydoggie.gif',
+//                 scaledSize: new google.maps.Size(50, 50)
+//             };
+//             let liners = [];
+//             function doSomethingLoop(maxCount, i){
+//                 if(i <= maxCount){
+//                     //markerを生成する処理
+//                     markers.push(new google.maps.Marker({
+// 			            position: areaLists[i],
+// 			            map: map,
+// 			            icon: img,
+// 			            //animation: google.maps.Animation.BOUNCE
+// 			        }));
+//
+//                     //polylineを生成する処理
+// 			        liners.push(areaLists[i]);
+// 			        let poly = new google.maps.Polyline({
+// 			            path: liners,
+// 			            strokeColor: '#000080',
+// 			            strokeOpacity: 0.8,
+// 			            strokeWeight: 4
+// 			        });
+// 			        poly.setMap(map);
+// 			        if(liners.length > 1){
+// 		                console.log('doSomethingLoop liners: ', liners);
+// 		                liners.shift();
+// 			        }
+//
+// 			        let time = new Date(locations[i].DateTime);
+// 			        $('#drop3').text((time.getMonth()+1) + ' / ' + time.getDate() + '  ' + time.getHours() + ' : ' + time.getMinutes() );
+//
+// 			        //1000msタイムアウトする処理
+// 			        setTimeout(function(){
+// 			            clearMarkers();
+// 			            poly.setMap(null);
+// 			            doSomethingLoop(maxCount, ++i);
+// 			        }, 1500);
+//                 }
+//                 console.log('movedRecord counter i: ', i);
+// 		        console.log('movedRecord areaList: ', areaLists[i]);
+//             }
+//
+//
+// 			function clearMarkers(){
+// 			    //mapに表示されているmarkerを消去
+// 			    for(let i=0; i<markers.length; i++){
+// 			        markers[i].setMap(null);
+// 			    }
+// 			    //maekersの値も消去
+// 			    markers = [];
+// 			}
+//
+//
+// 			//animationを表示する処理
+// 			function AnimateRecord(){
+// 			    console.log('AnimateRecord called');
+// 			    let line = new google.maps.Polyline({
+// 		            path: areaLists,
+// 		            strokeColor: '#000000',
+// 		            strokeOpacity: 0.5,
+// 		            strokeWeight: 4,
+// 		            icons: [{
+// 		                icon: lineSymbol,
+// 		                offset: '100%'
+// 		            }]
+// 			    });
+// 			    line.setMap(map);
+//
+// 			    animateCircle(line);
+// 			}
+//
+// 			//symbolアイコンをアニメーションする処理
+// 			function animateCircle(line){
+// 			    let count = 0;
+// 			    window.setInterval(function(){
+// 			        count = (count + 1) % 500;
+// 			        let icons = line.get('icons');
+// 			        icons[0].offset = (count / 5) + '%';
+// 			        line.set('icons', icons);
+// 			    }, 50);
+// 			}
+//
+// 			//アイコンを定義
+// 			let lineSymbol = {
+//                 path: google.maps.SymbolPath.CIRCLE,
+//                 scale: 8,
+//                 strokeColor: '#ff0000'
+//               };
+//
+//
+//
+// 			// DrawingManagerを生成
+// 			function setDrawingManager() {
+// 				var drawingManager = new google.maps.drawing.DrawingManager({
+// 					drawingMode: google.maps.drawing.OverlayType.PAN,
+// 					drawingControl: true,
+// 					drawingControlOptions: {
+// 						position: google.maps.ControlPosition.TOP_CENTER,
+// 						drawingModes : [
+// 							google.maps.drawing.OverlayType.POLYGON
+// 						]
+// 					},
+// 					//ポリゴンのオプション
+// 					polygonOptions: {
+// 						strokeColor: "#ff0000",
+// 						strokeOpacity: 0.5,
+// 						strokeWeight: 5,
+// 						fillColor: "#ff0000",
+// 						fillOpacity: fillOpacityRate,
+// 						clickable: true,
+// 						editable: true,
+// 						zIndex: 1
+// 					}
+// 				});
+// 				//console.log(drawingManager);
+// 				drawingManager.setMap(map);
+//
+// 				google.maps.event.addListener(drawingManager, 'polygoncomplete', function(polygon) {
+// 					var path = polygon.getPath();
+//
+// 				    let text = [];
+// 				    for(let i=0; i<path.getLength(); i++){
+// 				        let innerText = {};
+// 				        innerText['latitude'] = path.getAt(i).lat();
+// 				        innerText['longitude'] = path.getAt(i).lng();
+// 				        text.push(innerText);
+// 				    }
+// 					polygon_text = text;
+//
+// 					console.log('buttonFlag: ', buttonFlag);
+// 					// 設定画面表示
+// 					$('#modal-editArea').modal({}, {
+// 					    area: polygon_text,
+// 					    dataSet: {
+// 					        buttonFlag: buttonFlag,
+// 					        polygon_text: polygon_text
+// 					    }
+// 					});
+// 				});
+// 				return drawingManager;
+// 			};
+//
+//
+// 			/**
+// 			 * 中心座標を取得し、返却するfunction
+// 			 */
+// 			function editMap(rawPoints){
+// 			    console.log('editMap latLng: ', rawPoints);
+// 			    let editMap = {};
+// 			    let centerLat = 0;
+//     			let centerLng = 0;
+//
+// 			    if(rawPoints.length > 0){
+//     			    for(let i=0; i<rawPoints.length; i++){
+//     			        centerLat = centerLat + Number(rawPoints[i].lat);
+//     			        centerLng = centerLng + Number(rawPoints[i].lng);
+//     			    }
+//     			    editMap.map_latitude = centerLat / rawPoints.length;
+//     			    editMap.map_longitude = centerLng / rawPoints.length;
+//     			    editMap.map_zoom = '18';
+//     			    editMap.map_mapTypeId = 'roadmap';
+//     			    editMap.map_hue = '#ff0000';
+//     			    console.log('editMap:',editMap);
+// 			    }
+// 			    else{
+// 			        console.log('editMap else');
+// 			    }
+// 			    return editMap;
+// 			}
+//
+//
+//
+//
+// 			//****************************************************************************************************
+// 			// 初期化に関する処理
+// 			//****************************************************************************************************
+//
+//
+//             // マスタデータ取得処理処理
+// 			function getMasterData() {
+// 				$.when(
+// 				    getData("system", {
+// 						"selector": {
+// 							"_id": {"$ne": ""}
+// 						}
+// 					}),
+// 					getData("beacon", {
+// 						"selector": {
+// 							"_id": {"$ne": ""}
+// 						},
+// 						"fields": ["_id", "minor", "AreaID", "Location"],
+// 						"sort": [{"_id": "asc"}]
+// 					}),
+// 					getData("field", {
+// 						"selector": {
+// 							"_id": {"$regex":"area0"}
+// 						},
+// 						"fields":["_id","Name","Location"],
+// 						"sort": [{"_id": "asc"}]
+// 					})
+// 				// ).then(function(beacon_data){
+// 				).then(function(system_data, beacon_data, field_data){
+// 				    console.log('getMasterData response system_data: ', system_data);
+// 				    console.log('getMasterData response beacon_data: ', beacon_data);
+// 				    console.log('getMasterData response field_data: ', field_data);
+//
+// 				    // システムデータを変換
+// 					var sysdata = "{"
+// 					for (var i in system_data) {
+// 						sysdata += '"' + system_data[i]['_id'] + '"' + ":" + '"' + system_data[i]['value'] + '"';
+// 						if(i != system_data.length - 1){
+// 							sysdata += ",";
+// 						}
+// 					}
+// 					sysdata += "}";
+// 					system = JSON.parse(sysdata);
+// 					console.log('init() system:',system);
+//
+// 					// 取得データをグローバル変数に格納
+// 					beacons = beacon_data;
+// 					areas = field_data;
+// 					console.log('getMasterData response beacons: ', beacons);
+//
+// 					//mapオブジェクトを生成
+// 					initMap();
+//
+// 				},function(error){
+// 				    console.log('getMasterData error: ', error);
+// 				});
+// 			};
+//
+//
+// 			let areaLists = [];
+// 			function getTransactionData(){
+// 			    $.when(
+// 			        getData("old-location", {
+// 						"selector": {
+// 							"DateTime": {"$regex": "2019/07/29"}
+// 						},
+// 						"fields": ["_id", "DateTime", "DeviceID", "Beacon"],
+// 						"sort": [{"DateTime": 'asc'}]
+// 					}),
+// 			    ).then(function(response){
+// 			        console.log('getTransactionData ajax response: ', response);
+// 			        // 取得データをグローバル変数に格納
+// 					locations = response;
+// 					console.log('getTransactionData ajax locations: ', locations[0].Beacon.minor);
+//
+// 					//プロットする座標データをareaListsに格納
+// 					for(let i=0; i<locations.length; i++){
+// 					    for(let j=0; j<beacons.length; j++){
+// 					        if(locations[i].Beacon.minor == beacons[j].minor){
+// 					            let areaList = {};
+// 					            areaList['lat'] = Number(beacons[j].Location.latitude);
+// 					            areaList['lng'] = Number(beacons[j].Location.longitude);
+// 					            areaLists.push(areaList);
+// 					        }
+// 					    }
+// 					}
+// 					console.log('getTransactionData ajax areaLists: ', areaLists);
+//
+// 					$('#drop').prop('disabled', false);
+// 					$('#drop2').prop('disabled', false);
+//
+// 			    },function(error){
+// 			        console.log('getTransactionData ajax error: ', error);
+// 			    })
+// 			}
+//
+//
+//
+//
+//
+//
+// 			$(function(){
+//
+// 				// 初期処理
+// 				//init();
+//
+// 				// データ取得処理実行
+// 				getMasterData();
+//
+// 				getTransactionData();
+//
+//
+//
+//
+// 			});
+		</script>
+	</body>
+</html>

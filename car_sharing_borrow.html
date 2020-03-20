@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ja">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<title>Car Sharing Appllication</title>
+
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+
+		<style type="text/css">
+			body {
+				overflow-y: scroll;
+			}
+			.no-gutters {
+				margin:0;
+				padding:0;
+			}
+			.no-gutters　> .col,
+			.no-gutters　> [class*="col-"] {
+				margin:0;
+				padding:0;
+			}
+			#map-canvas {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100% !important;
+				height: 100% !important;
+			}
+			#floating-panel {
+        position: absolute;
+        top: 10px;
+        left: 25%;
+        z-index: 5;
+        background-color: #fff;
+        padding: 5px;
+        border: 1px solid #999;
+        text-align: center;
+        font-family: 'Roboto','sans-serif';
+        line-height: 30px;
+        padding-left: 10px;
+      }
+      #floating-panel {
+        margin-left: -52px;
+      }
+
+		</style>
+	</head>
+
+	<body style="padding-top:4.5rem;">
+		  <div id="floating-panel">
+		      <button id="drop" onclick="drop()">車を検索</button>
+	    </div>
+	    <div>
+            <div id="map" style="width:100%;height:300px;"></div>
+      </div>
+
+
+		<!-- <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDjLyzdd1jNcV0bNd1dzQIEV7Vl91wp1kE&language=ja&libraries=drawing,geometry"></script>
+    AIzaSyBnqzHDQ8qmWXdJI7TmIA3BjW9KIcQThmk -->
+		<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+		<script src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnqzHDQ8qmWXdJI7TmIA3BjW9KIcQThmk"></script>
+		<script src="https://www.gstatic.com/charts/loader.js"></script>
+
+		<script>
+
+		let markers = [];
+		let personalDatas = [];
+
+		$(function(){
+			let map = null;
+
+      initMap();
+
+			let table = 'sharing';
+			$.ajax({
+				type: "POST",
+				url: "../common/get_cloudant",
+				data: {
+				    "table": table,
+				},
+				dataType: 'json',
+			}).then(function(response){
+				console.log('ajax response: ', response);
+
+				let datas = response.data;
+				console.log(datas);
+				console.log(datas[0].place['lat']);
+
+				//let personalDatas = [];
+				let latLngDatas = [];
+				for(let i=0; i<datas.length; i++){
+					let personalData = {};
+					personalData.name = datas[i].name;
+					personalData.type = datas[i].type;
+					personalData.price = datas[i].price;
+					let latLngData = {};
+					latLngData.lat = parseFloat(datas[i].place.lat)
+					latLngData.lng = parseFloat(datas[i].place.lng)
+					personalData.place = latLngData;
+					personalDatas.push(personalData);
+				}
+				console.log(personalDatas);
+
+			}, function(error){
+				console.log('ajax error: ', error);
+				alert('データを取得できませんでした');
+			})
+		})
+
+
+			// 現在地取得処理
+			function initMap() {
+				// Geolocation APIに対応している
+				if (navigator.geolocation) {
+				 // 現在地を取得
+				 navigator.geolocation.getCurrentPosition(
+					 // 取得成功した場合
+					 function(position) {
+						 // 緯度・経度を変数に格納
+						 var mapLatLng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+						 // マップオプションを変数に格納
+						 var mapOptions = {
+							 zoom : 14.5,          // 拡大倍率
+							 center : mapLatLng  // 緯度・経度
+						 };
+						 // マップオブジェクト作成
+						 map = new google.maps.Map(
+							 document.getElementById("map"), // マップを表示する要素
+							 mapOptions         // マップオプション
+						 );
+						 //　マップにマーカーを表示する
+						 var marker = new google.maps.Marker({
+							 map : map,             // 対象の地図オブジェクト
+							 position : mapLatLng   // 緯度・経度
+						 });
+						 // マップにサークルを表示
+	           var cityCircle = new google.maps.Circle({
+	               strokeColor: '#FF0000',
+	               strokeOpacity: 0.8,
+	               strokeWeight: 2,
+	               fillColor: '#FF0000',
+	               fillOpacity: 0.2,
+	               map: map,
+	               center: mapLatLng,
+	               radius: 1000
+	           });
+
+					 },
+					 // 取得失敗した場合
+					 function(error) {
+						 // エラーメッセージを表示
+						 switch(error.code) {
+							 case 1: // PERMISSION_DENIED
+								 alert("位置情報の利用が許可されていません");
+								 break;
+							 case 2: // POSITION_UNAVAILABLE
+								 alert("現在位置が取得できませんでした");
+								 break;
+							 case 3: // TIMEOUT
+								 alert("タイムアウトになりました");
+								 break;
+							 default:
+								 alert("その他のエラー(エラーコード:"+error.code+")");
+								 break;
+						 }
+					 }
+				 );
+				// Geolocation APIに対応していない
+				} else {
+				 alert("この端末では位置情報が取得できません");
+				}
+			}
+
+			function drop() {
+        clearMarkers();
+        for (var i = 0; i < personalDatas.length; i++) {
+					console.log('drop for place: ', personalDatas[i].place);
+          addMarkerWithTimeout(personalDatas[i].place, i * 200);
+        }
+      }
+
+      function addMarkerWithTimeout(position, timeout) {
+        window.setTimeout(function() {
+          let mark = new google.maps.Marker({
+            position: position,
+            map: map,
+            animation: google.maps.Animation.DROP
+          });
+					// markers.push(new google.maps.Marker({
+          //   position: position,
+          //   map: map,
+          //   animation: google.maps.Animation.DROP
+          // }));
+					markers.push(mark);
+        }, timeout);
+      }
+
+      function clearMarkers() {
+        for (var i = 0; i < markers.length; i++) {
+          markers[i].setMap(null);
+        }
+        markers = [];
+      }
+
+		</script>
+	</body>
+</html>
